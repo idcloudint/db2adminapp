@@ -1,0 +1,153 @@
+.health-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.health-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.health-card-healthy {
+  border-left: 4px solid #24a148;
+}
+
+.health-card-warning {
+  border-left: 4px solid #f1c21b;
+}
+
+.health-card-critical {
+  border-left: 4px solid #da1e28;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-left-color: #da1e28;
+  }
+  50% {
+    border-left-color: #ff6b6b;
+  }
+}
+
+.health-card-unknown {
+  border-left: 4px solid #8d8d8d;
+}
+
+.health-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.health-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.health-card-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #161616;
+}
+
+.status-icon {
+  flex-shrink: 0;
+}
+
+.status-icon.healthy {
+  color: #24a148;
+}
+
+.status-icon.warning {
+  color: #f1c21b;
+}
+
+.status-icon.critical {
+  color: #da1e28;
+  animation: pulse-icon 1s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.status-icon.unknown {
+  color: #8d8d8d;
+}
+
+.health-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.health-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.health-card-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #525252;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.health-card-explanation,
+.health-card-recommendation {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #161616;
+  margin: 0;
+}
+
+.health-card-details {
+  font-size: 13px;
+  color: #525252;
+  background: #f4f4f4;
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.health-card-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.health-card-timestamp {
+  font-size: 12px;
+  color: #8d8d8d;
+  font-style: italic;
+}
+
+/* Details formatting */
+.health-card-details ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.health-card-details li {
+  margin-bottom: 4px;
+}
+
+.health-card-details strong {
+  color: #161616;
+}
+
+/* Made with Bob */

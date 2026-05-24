@@ -1,0 +1,179 @@
+.dashboard {
+  min-height: 100vh;
+  background: #f4f4f4;
+  padding: 32px;
+}
+
+.dashboard-loading,
+.dashboard-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  background: white;
+  padding: 24px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #161616;
+}
+
+.dashboard-subtitle {
+  font-size: 14px;
+  color: #525252;
+  margin: 0;
+}
+
+.dashboard-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.connection-indicator.connected {
+  background: #d0e2d0;
+  color: #0f6212;
+}
+
+.connection-indicator.disconnected {
+  background: #ffd7d9;
+  color: #750e13;
+}
+
+.connection-indicator svg {
+  flex-shrink: 0;
+}
+
+.spinning {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.overall-status {
+  padding: 24px;
+  border-radius: 4px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.overall-status h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.overall-status-healthy {
+  background: #d0e2d0;
+  color: #0f6212;
+}
+
+.overall-status-warning {
+  background: #fcf4d6;
+  color: #684e00;
+}
+
+.overall-status-critical {
+  background: #ffd7d9;
+  color: #750e13;
+  animation: pulse-bg 2s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% {
+    background: #ffd7d9;
+  }
+  50% {
+    background: #ffb3b8;
+  }
+}
+
+.overall-status-unknown {
+  background: #e0e0e0;
+  color: #525252;
+}
+
+.critical-issues-count {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.dashboard-grid {
+  margin-bottom: 32px;
+}
+
+.dashboard-grid .cds--col {
+  margin-bottom: 24px;
+}
+
+.dashboard-footer {
+  text-align: center;
+  padding: 24px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-footer p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #525252;
+}
+
+.dashboard-footer p:first-child {
+  font-weight: 600;
+  color: #161616;
+}
+
+/* Responsive adjustments */
+@media (max-width: 672px) {
+  .dashboard {
+    padding: 16px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .dashboard-title {
+    font-size: 24px;
+  }
+
+  .overall-status h2 {
+    font-size: 20px;
+  }
+}
+
+/* Made with Bob */

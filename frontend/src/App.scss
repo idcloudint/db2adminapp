@@ -1,0 +1,24 @@
+@import '@carbon/react/scss/reset';
+@import '@carbon/react/scss/themes';
+@import '@carbon/react/scss/theme';
+@import '@carbon/react/scss/components';
+@import '@carbon/react/scss/grid';
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.App {
+  min-height: 100vh;
+}
+
+/* Made with Bob */

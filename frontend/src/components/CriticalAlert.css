@@ -1,0 +1,79 @@
+.critical-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(218, 30, 40, 0.95);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    background-color: rgba(218, 30, 40, 0.95);
+  }
+  50% {
+    background-color: rgba(218, 30, 40, 0.85);
+  }
+}
+
+.critical-alert-container {
+  background: white;
+  border-radius: 8px;
+  padding: 48px;
+  max-width: 800px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+  20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+.critical-alert-icon {
+  color: #da1e28;
+  margin-bottom: 24px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.critical-alert-title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #da1e28;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.critical-alert-subtitle {
+  font-size: 32px;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 16px 0;
+}
+
+.critical-alert-message {
+  font-size: 18px;
+  color: #525252;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+}
+
+.critical-alert-notification {
+  margin-top: 24px;
+  text-align: left;
+}
+
+/* Made with Bob */
