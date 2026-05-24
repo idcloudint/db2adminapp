@@ -1,6 +1,6 @@
 import { HealthSummary, PodHealth, DB2Health, StorageHealth, BackupHealth, ApiResponse } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 class ApiService {
   private async fetchApi<T>(endpoint: string): Promise<T> {
