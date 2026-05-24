@@ -18,8 +18,15 @@ class WebSocketService {
       return;
     }
 
-    console.log('Connecting to WebSocket:', url);
-    this.ws = new WebSocket(url);
+    // Convert relative URL to absolute WebSocket URL with proper protocol
+    let wsUrl = url;
+    if (url.startsWith('/')) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}${url}`;
+    }
+
+    console.log('Connecting to WebSocket:', wsUrl);
+    this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       console.log('WebSocket connected');
