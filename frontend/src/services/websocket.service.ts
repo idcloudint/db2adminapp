@@ -12,7 +12,7 @@ class WebSocketService {
   private maxReconnectAttempts = 10;
   private reconnectDelay = 3000;
 
-  connect(url: string = 'ws://localhost:3001/ws') {
+  connect(url: string = process.env.REACT_APP_WS_URL || '/ws') {
     if (this.ws?.readyState === WebSocket.OPEN) {
       console.log('WebSocket already connected');
       return;
