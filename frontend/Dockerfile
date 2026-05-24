@@ -1,6 +1,9 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+# Accept build argument for API URL
+ARG REACT_APP_API_URL=""
+
 WORKDIR /app
 
 # Copy package files
@@ -12,7 +15,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build for production
+# Build for production with environment variable
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 RUN npm run build
 
 # Production stage with nginx
