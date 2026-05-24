@@ -1,6 +1,10 @@
 import { HealthSummary, PodHealth, DB2Health, StorageHealth, BackupHealth, ApiResponse } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+// Use empty string for relative URLs (same origin as frontend)
+// This allows nginx to proxy /api requests to the backend
+const API_BASE_URL = process.env.REACT_APP_API_URL !== undefined
+  ? process.env.REACT_APP_API_URL
+  : '';
 
 class ApiService {
   private async fetchApi<T>(endpoint: string): Promise<T> {
