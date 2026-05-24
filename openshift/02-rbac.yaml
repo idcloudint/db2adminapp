@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: db2-day2ops-backend
+  namespace: db2-day2ops
+  labels:
+    app: db2-day2ops
+    component: backend
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: db2-day2ops-monitor
+  labels:
+    app: db2-day2ops
+rules:
+  # Read pods in db2-community namespace
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/status"]
+    verbs: ["get", "list", "watch"]
+  
+  # Read pod events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+  
+  # Execute commands in pods
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  
+  # Read PVCs
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list"]
+  
+  # Read namespaces
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: db2-day2ops-monitor-binding
+  labels:
+    app: db2-day2ops
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: db2-day2ops-monitor
+subjects:
+  - kind: ServiceAccount
+    name: db2-day2ops-backend
+    namespace: db2-day2ops
+
+# Made with Bob

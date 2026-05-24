@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db2-day2ops-backend
+  namespace: db2-day2ops
+  labels:
+    app: db2-day2ops
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db2-day2ops
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: db2-day2ops
+        component: backend
+    spec:
+      serviceAccountName: db2-day2ops-backend
+      containers:
+        - name: backend
+          image: image-registry.openshift-image-registry.svc:5000/db2-day2ops/db2-day2ops-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: db2-day2ops-backend-config
+            - secretRef:
+                name: db2-day2ops-backend-secret
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: logs
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db2-day2ops-backend
+  namespace: db2-day2ops
+  labels:
+    app: db2-day2ops
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+  selector:
+    app: db2-day2ops
+    component: backend
+
+# Made with Bob
