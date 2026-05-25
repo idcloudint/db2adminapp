@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as k8s from '@kubernetes/client-node';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import logger from '../utils/logger';
 import config from '../config';
 import {
@@ -8,6 +10,16 @@ import {
   TaskRunSummary,
   TaskHistory
 } from '../types/daily-tasks.types';
+
+// History storage configuration
+const HISTORY_DIR = path.join(process.cwd(), 'data');
+const HISTORY_FILE = path.join(HISTORY_DIR, 'task-history.json');
+const MAX_HISTORY_RUNS = 100;
+
+interface HistoryStorage {
+  runs: TaskHistory[];
+  lastUpdated: string;
+}
 
 // Initialize Kubernetes client
 const kc = new k8s.KubeConfig();
@@ -102,6 +114,65 @@ async function execInDB2Pod(command: string): Promise<{ stdout: string; stderr: 
 class DailyTasksService {
   private taskHistory: TaskHistory[] = [];
   private currentRun: TaskRunSummary | null = null;
+  private historyLoaded: boolean = false;
+
+  constructor() {
+    // Load history on initialization
+    this.loadHistory().catch(err => {
+      logger.error('Failed to load task history', { error: err.message });
+    });
+  }
+
+  /**
+   * Load task history from file
+   */
+  private async loadHistory(): Promise<void> {
+    try {
+      // Ensure data directory exists
+      await fs.mkdir(HISTORY_DIR, { recursive: true });
+      
+      // Try to read history file
+      const data = await fs.readFile(HISTORY_FILE, 'utf-8');
+      const storage: HistoryStorage = JSON.parse(data);
+      
+      this.taskHistory = storage.runs || [];
+      this.historyLoaded = true;
+      
+      logger.info('Task history loaded', { runs: this.taskHistory.length });
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        // File doesn't exist yet, start fresh
+        logger.info('No existing task history found, starting fresh');
+        this.taskHistory = [];
+        this.historyLoaded = true;
+      } else {
+        logger.error('Error loading task history', { error: error.message });
+        this.taskHistory = [];
+        this.historyLoaded = true;
+      }
+    }
+  }
+
+  /**
+   * Save task history to file
+   */
+  private async saveHistory(): Promise<void> {
+    try {
+      // Ensure data directory exists
+      await fs.mkdir(HISTORY_DIR, { recursive: true });
+      
+      const storage: HistoryStorage = {
+        runs: this.taskHistory.slice(0, MAX_HISTORY_RUNS),
+        lastUpdated: new Date().toISOString()
+      };
+      
+      await fs.writeFile(HISTORY_FILE, JSON.stringify(storage, null, 2), 'utf-8');
+      
+      logger.debug('Task history saved', { runs: this.taskHistory.length });
+    } catch (error: any) {
+      logger.error('Error saving task history', { error: error.message });
+    }
+  }
 
   // Define all daily tasks based on db2day2ops.docx
   private readonly tasks: DailyTask[] = [
@@ -211,14 +282,20 @@ class DailyTasksService {
         total: summary.totalTasks,
         passed: summary.passed,
         warnings: summary.warnings,
-        failed: summary.failed
+        failed: summary.failed,
+        errors: summary.errors
       }
     });
 
-    // Keep only last 50 runs
-    if (this.taskHistory.length > 50) {
-      this.taskHistory = this.taskHistory.slice(0, 50);
+    // Keep only last MAX_HISTORY_RUNS
+    if (this.taskHistory.length > MAX_HISTORY_RUNS) {
+      this.taskHistory = this.taskHistory.slice(0, MAX_HISTORY_RUNS);
     }
+
+    // Save history to file (async, don't wait)
+    this.saveHistory().catch(err => {
+      logger.error('Failed to save task history', { error: err.message });
+    });
 
     logger.info('Daily tasks run completed', { 
       runId, 
@@ -271,6 +348,43 @@ class DailyTasksService {
         error: error.message
       });
 
+      // Detect exit code 4 (DB2 SQL errors or permission issues)
+      const isExitCode4 = error.message.includes('exit status 4') || error.message.includes('exit code: 4');
+      
+      if (isExitCode4) {
+        return {
+          taskId: task.id,
+          taskName: task.name,
+          status: 'error',
+          message: 'Feature not available or requires additional configuration',
+          details: {
+            error: error.message,
+            stderr: error.stderr,
+            exitCode: 4,
+            possibleCauses: [
+              'Monitoring function not enabled',
+              'Insufficient permissions',
+              'Database object does not exist',
+              'DB2 version compatibility issue'
+            ]
+          },
+          timestamp: new Date(),
+          duration,
+          command: task.command,
+          stdout: '',
+          stderr: error.message,
+          metrics: {},
+          recommendations: [
+            'Verify db2inst1 user has required permissions',
+            'Check if database is activated: db2 activate database SAMPLE',
+            'Enable monitoring switches if needed: db2 update monitor switches using statement on',
+            'Verify DB2 version supports this monitoring function',
+            'Check db2diag.log for detailed error information'
+          ]
+        };
+      }
+
+      // Generic error handling
       return {
         taskId: task.id,
         taskName: task.name,
@@ -283,7 +397,12 @@ class DailyTasksService {
         stdout: '',
         stderr: error.message,
         metrics: {},
-        recommendations: ['Check DB2 pod status', 'Verify database connectivity', 'Review pod logs for errors']
+        recommendations: [
+          'Check DB2 pod status',
+          'Verify database connectivity',
+          'Review pod logs for errors',
+          'Ensure database is started and accessible'
+        ]
       };
     }
   }
@@ -442,10 +561,38 @@ class DailyTasksService {
         };
 
       case 'connection-health':
-        const connMatch = stdout.match(/(\d+)\s+(\d+)/);
+        // Match the actual data row: number followed by either a number or - (AUTOMATIC)
+        // Example output:
+        // ACTIVE_CONNECTIONS MAX_CONNECTIONS
+        // ------------------ ----------------
+        //                  5 -
+        //   1 record(s) selected.
+        const connMatch = stdout.match(/^\s*(\d+)\s+(-|NULL|\d+)\s*$/m);
         if (connMatch) {
           const active = parseInt(connMatch[1]);
-          const max = parseInt(connMatch[2]);
+          const maxStr = connMatch[2].trim();
+          
+          // Handle AUTOMATIC configuration (shown as - or NULL)
+          if (maxStr === '-' || maxStr === 'NULL' || maxStr === '') {
+            return {
+              status: 'pass',
+              message: `Active connections: ${active} (max_connections=AUTOMATIC)`,
+              details: { active, maxConfig: 'AUTOMATIC', output: stdout },
+              metrics: {
+                activeConnections: active,
+                maxConnections: 'AUTOMATIC',
+                utilization: 'N/A'
+              },
+              recommendations: [
+                'max_connections is set to AUTOMATIC',
+                'DB2 will manage connection limits dynamically',
+                'Monitor for connection-related errors in db2diag.log'
+              ]
+            };
+          }
+          
+          // Handle numeric max_connections
+          const max = parseInt(maxStr);
           const usage = (active / max) * 100;
           
           if (usage >= 90) {
@@ -474,17 +621,31 @@ class DailyTasksService {
               ]
             };
           }
+          
+          return {
+            status: 'pass',
+            message: `Connection usage is healthy: ${active}/${max} (${usage.toFixed(1)}%)`,
+            details: { active, max, usage },
+            metrics: {
+              activeConnections: active,
+              maxConnections: max,
+              utilization: usage.toFixed(1) + '%'
+            },
+            recommendations: []
+          };
         }
+        
+        // Fallback if parsing fails
         return {
-          status: 'pass',
-          message: 'Connection usage is healthy',
+          status: 'warning',
+          message: 'Could not parse connection information',
           details: { output: stdout },
-          metrics: connMatch ? {
-            activeConnections: parseInt(connMatch[1]),
-            maxConnections: parseInt(connMatch[2]),
-            utilization: ((parseInt(connMatch[1]) / parseInt(connMatch[2])) * 100).toFixed(1) + '%'
-          } : {},
-          recommendations: []
+          metrics: {},
+          recommendations: [
+            'Check DB2 connection monitoring configuration',
+            'Verify SYSIBMADM.DBCFG is accessible',
+            'Review command output format'
+          ]
         };
 
       case 'lock-analysis':

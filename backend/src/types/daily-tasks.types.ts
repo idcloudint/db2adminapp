@@ -58,6 +58,7 @@ export interface TaskHistory {
     passed: number;
     warnings: number;
     failed: number;
+    errors: number;
   };
 }
 

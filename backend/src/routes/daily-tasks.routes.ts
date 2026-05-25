@@ -167,6 +167,57 @@ router.get('/current', async (_req: Request, res: Response) => {
     });
   }
 });
+/**
+ * GET /api/daily-tasks/history
+ * Get task execution history
+ */
+router.get('/history', async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const history = dailyTasksService.getHistory().slice(0, limit);
+    
+    res.json({
+      success: true,
+      data: history
+    });
+  } catch (error: any) {
+    logger.error('Failed to get task history', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get task history'
+    });
+  }
+});
+
+/**
+ * GET /api/daily-tasks/history/:runId
+ * Get specific run details by ID
+ */
+router.get('/history/:runId', async (req: Request, res: Response) => {
+  try {
+    const { runId } = req.params;
+    const run = dailyTasksService.getRunById(runId);
+    
+    if (!run) {
+      return res.status(404).json({
+        success: false,
+        error: 'Run not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: run
+    });
+  } catch (error: any) {
+    logger.error('Failed to get run details', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get run details'
+    });
+  }
+});
+
 
 /**
  * GET /api/daily-tasks/history
