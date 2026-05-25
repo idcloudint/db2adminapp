@@ -117,7 +117,7 @@ class DailyTasksService {
       name: 'Tablespace Health Check',
       description: 'Check tablespace usage and status',
       category: 'storage',
-      command: 'db2 "SELECT TBSP_NAME, TBSP_STATE, TBSP_USED_PAGES, TBSP_TOTAL_PAGES, DECIMAL((FLOAT(TBSP_USED_PAGES)/FLOAT(TBSP_TOTAL_PAGES))*100,5,2) AS PCT_USED FROM TABLE(MON_GET_TABLESPACE(NULL,-2)) ORDER BY PCT_USED DESC"',
+      command: 'db2 connect to SAMPLE && db2 "SELECT TBSP_NAME, TBSP_STATE, TBSP_USED_PAGES, TBSP_TOTAL_PAGES, DECIMAL((FLOAT(TBSP_USED_PAGES)/FLOAT(TBSP_TOTAL_PAGES))*100,5,2) AS PCT_USED FROM TABLE(MON_GET_TABLESPACE(NULL,-2)) ORDER BY PCT_USED DESC" && db2 terminate',
       threshold: {
         warning: 80,
         critical: 90
@@ -128,7 +128,7 @@ class DailyTasksService {
       name: 'Transaction Log Health',
       description: 'Check transaction log usage',
       category: 'logs',
-      command: 'db2 "SELECT LOG_UTILIZATION_PERCENT, TOTAL_LOG_USED_KB, TOTAL_LOG_AVAILABLE_KB FROM TABLE(MON_GET_TRANSACTION_LOG(-2))"',
+      command: 'db2 connect to SAMPLE && db2 "SELECT LOG_UTILIZATION_PERCENT, TOTAL_LOG_USED_KB, TOTAL_LOG_AVAILABLE_KB FROM TABLE(MON_GET_TRANSACTION_LOG(-2))" && db2 terminate',
       threshold: {
         warning: 75,
         critical: 85
@@ -146,21 +146,21 @@ class DailyTasksService {
       name: 'Connection Health',
       description: 'Check active connections and connection limits',
       category: 'connections',
-      command: 'db2 "SELECT COUNT(*) AS ACTIVE_CONNECTIONS, (SELECT VALUE FROM SYSIBMADM.DBCFG WHERE NAME=\'max_connections\') AS MAX_CONNECTIONS FROM TABLE(MON_GET_CONNECTION(NULL,-2))"'
+      command: 'db2 connect to SAMPLE && db2 "SELECT COUNT(*) AS ACTIVE_CONNECTIONS, (SELECT VALUE FROM SYSIBMADM.DBCFG WHERE NAME=\'max_connections\') AS MAX_CONNECTIONS FROM TABLE(MON_GET_CONNECTION(NULL,-2))" && db2 terminate'
     },
     {
       id: 'lock-analysis',
       name: 'Lock and Blocking Analysis',
       description: 'Check for lock waits and blocking',
       category: 'locks',
-      command: 'db2 "SELECT AGENT_ID, LOCK_WAIT_TIME, LOCK_WAITS FROM TABLE(MON_GET_CONNECTION(NULL,-2)) WHERE LOCK_WAIT_TIME > 0 ORDER BY LOCK_WAIT_TIME DESC"'
+      command: 'db2 connect to SAMPLE && db2 "SELECT AGENT_ID, LOCK_WAIT_TIME, LOCK_WAITS FROM TABLE(MON_GET_CONNECTION(NULL,-2)) WHERE LOCK_WAIT_TIME > 0 ORDER BY LOCK_WAIT_TIME DESC" && db2 terminate'
     },
     {
       id: 'backup-verification',
       name: 'Backup Verification',
       description: 'Check last successful backup',
       category: 'backup',
-      command: 'db2 "SELECT DBNAME, START_TIME, END_TIME, SQLCODE FROM SYSIBMADM.DB_HISTORY WHERE OPERATION=\'B\' ORDER BY START_TIME DESC FETCH FIRST 5 ROWS ONLY"'
+      command: 'db2 connect to SAMPLE && db2 "SELECT DBNAME, START_TIME, END_TIME, SQLCODE FROM SYSIBMADM.DB_HISTORY WHERE OPERATION=\'B\' ORDER BY START_TIME DESC FETCH FIRST 5 ROWS ONLY" && db2 terminate'
     }
   ];
 
