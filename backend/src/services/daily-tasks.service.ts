@@ -114,7 +114,6 @@ async function execInDB2Pod(command: string): Promise<{ stdout: string; stderr: 
 class DailyTasksService {
   private taskHistory: TaskHistory[] = [];
   private currentRun: TaskRunSummary | null = null;
-  private historyLoaded: boolean = false; // Track if history has been loaded from file
 
   constructor() {
     // Load history on initialization
@@ -136,7 +135,6 @@ class DailyTasksService {
       const storage: HistoryStorage = JSON.parse(data);
       
       this.taskHistory = storage.runs || [];
-      this.historyLoaded = true;
       
       logger.info('Task history loaded', { runs: this.taskHistory.length });
     } catch (error: any) {
@@ -144,11 +142,9 @@ class DailyTasksService {
         // File doesn't exist yet, start fresh
         logger.info('No existing task history found, starting fresh');
         this.taskHistory = [];
-        this.historyLoaded = true;
       } else {
         logger.error('Error loading task history', { error: error.message });
         this.taskHistory = [];
-        this.historyLoaded = true;
       }
     }
   }
