@@ -193,16 +193,17 @@ router.get('/history', async (req: Request, res: Response) => {
  * GET /api/daily-tasks/history/:runId
  * Get specific run details by ID
  */
-router.get('/history/:runId', async (req: Request, res: Response) => {
+router.get('/history/:runId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { runId } = req.params;
     const run = dailyTasksService.getRunById(runId);
     
     if (!run) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Run not found'
       });
+      return;
     }
     
     res.json({

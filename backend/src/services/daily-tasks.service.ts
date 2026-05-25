@@ -114,7 +114,7 @@ async function execInDB2Pod(command: string): Promise<{ stdout: string; stderr: 
 class DailyTasksService {
   private taskHistory: TaskHistory[] = [];
   private currentRun: TaskRunSummary | null = null;
-  private historyLoaded: boolean = false;
+  private historyLoaded: boolean = false; // Track if history has been loaded from file
 
   constructor() {
     // Load history on initialization
