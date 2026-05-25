@@ -61,7 +61,7 @@ const Navigation: React.FC = () => {
                   key={item.path}
                   href={item.path}
                   isCurrentPage={location.pathname === item.path}
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                     e.preventDefault();
                     navigate(item.path);
                   }}
@@ -91,7 +91,7 @@ const Navigation: React.FC = () => {
                       key={item.path}
                       href={item.path}
                       isActive={location.pathname === item.path}
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                         e.preventDefault();
                         navigate(item.path);
                         onClickSideNavExpand();
