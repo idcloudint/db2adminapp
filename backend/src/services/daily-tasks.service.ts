@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
+import * as k8s from '@kubernetes/client-node';
 import logger from '../utils/logger';
 import config from '../config';
 import {
@@ -12,29 +13,93 @@ import {
 
 const execAsync = promisify(exec);
 
-// Helper function to get DB2 pod name
+// Initialize Kubernetes client
+const kc = new k8s.KubeConfig();
+kc.loadFromDefault();
+const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+const k8sExec = new k8s.Exec(kc);
+
+// Helper function to get DB2 pod name using Kubernetes API
 async function getDB2PodName(): Promise<string> {
   try {
-    const { stdout } = await execAsync(
-      `oc get pods -n ${config.db2.namespace} -l ${config.db2.podLabel} -o jsonpath='{.items[0].metadata.name}'`
+    const labelSelector = config.db2.podLabel;
+    const response = await k8sApi.listNamespacedPod(
+      config.db2.namespace,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      labelSelector
     );
-    return stdout.trim().replace(/'/g, '');
-  } catch (error) {
-    logger.error('Failed to get DB2 pod name', { error });
+    
+    if (!response.body.items || response.body.items.length === 0) {
+      throw new Error(`No pods found with label ${labelSelector} in namespace ${config.db2.namespace}`);
+    }
+    
+    const runningPod = response.body.items.find(pod => pod.status?.phase === 'Running');
+    if (!runningPod || !runningPod.metadata?.name) {
+      throw new Error('No running DB2 pod found');
+    }
+    
+    logger.debug('Found DB2 pod', { podName: runningPod.metadata.name });
+    return runningPod.metadata.name;
+  } catch (error: any) {
+    logger.error('Failed to get DB2 pod name', { error: error.message });
     throw new Error('Could not find DB2 pod');
   }
 }
 
-// Helper function to execute command in DB2 pod
+// Helper function to execute command in DB2 pod using Kubernetes API
 async function execInDB2Pod(command: string): Promise<{ stdout: string; stderr: string }> {
   const podName = await getDB2PodName();
-  const wrappedCommand = `oc exec -n ${config.db2.namespace} ${podName} -- su - ${config.db2.user} -c "${command}"`;
+  
+  // Wrap command to run as db2inst1 user
+  const wrappedCommand = ['su', '-', config.db2.user, '-c', command];
   
   logger.debug('Executing command in DB2 pod', { podName, command });
   
-  return await execAsync(wrappedCommand, {
-    timeout: 30000,
-    maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+  return new Promise(async (resolve, reject) => {
+    let stdout = '';
+    let stderr = '';
+    
+    try {
+      const ws = await k8sExec.exec(
+        config.db2.namespace,
+        podName,
+        '',
+        wrappedCommand,
+        process.stdout,
+        process.stderr,
+        process.stdin,
+        false,
+        (status: k8s.V1Status) => {
+          if (status.status === 'Failure') {
+            reject(new Error(status.message || 'Command execution failed'));
+          } else {
+            resolve({ stdout, stderr });
+          }
+        }
+      );
+      
+      // Capture stdout
+      ws.on('message', (data: Buffer) => {
+        stdout += data.toString();
+      });
+      
+      // Capture stderr
+      ws.on('error', (error: Error) => {
+        stderr += error.message;
+      });
+      
+      // Set timeout
+      setTimeout(() => {
+        ws.close();
+        reject(new Error('Command execution timeout'));
+      }, 30000);
+      
+    } catch (error: any) {
+      reject(error);
+    }
   });
 }
 
