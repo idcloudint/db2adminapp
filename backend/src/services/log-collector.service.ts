@@ -10,10 +10,8 @@ import {
   LogCollectionRequest,
   LogCollectionJob,
   LogComponent,
-  LogComponentStatus,
   CollectionHistory,
-  NFSConfig,
-  LogCollectionResult
+  NFSConfig
 } from '../types/log-collector.types';
 
 const execAsync = promisify(exec);
@@ -228,7 +226,7 @@ class LogCollectorService {
   /**
    * Collect DB2 diagnostic log
    */
-  private async collectDB2Diag(outputDir: string, request: LogCollectionRequest): Promise<void> {
+  private async collectDB2Diag(outputDir: string, _request: LogCollectionRequest): Promise<void> {
     try {
       const { stdout } = await execAsync('db2diag -A', {
         timeout: 60000,

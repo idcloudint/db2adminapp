@@ -10,9 +10,7 @@ import {
   SearchResult,
   RecommendedCommand,
   CommandExecutionResult,
-  InvestigationHistory,
-  MCPSearchRequest,
-  MCPSearchResponse
+  InvestigationHistory
 } from '../types/investigation.types';
 
 const execAsync = promisify(exec);
@@ -22,12 +20,6 @@ class InvestigationService {
   private readonly mistralApiUrl = 'https://api.mistral.ai/v1/chat/completions';
   private investigationHistory: InvestigationHistory[] = [];
 
-  // MCP server endpoints (these would be configured based on your MCP setup)
-  private readonly mcpEndpoints = {
-    ibmDocs: 'https://www.ibm.com/docs/en/db2',
-    ibmSupport: 'https://www.ibm.com/support/pages',
-    knowledgeCenter: 'https://www.ibm.com/support/knowledgecenter'
-  };
 
   /**
    * Perform complex investigation
@@ -295,7 +287,7 @@ Provide your analysis in JSON format with keys:
    */
   private async generateRecommendedCommands(
     request: InvestigationRequest,
-    searchResults: SearchResult[],
+    _searchResults: SearchResult[],
     aiConclusion: any
   ): Promise<RecommendedCommand[]> {
     const prompt = `Based on this DB2 investigation, recommend 3-5 diagnostic commands:
