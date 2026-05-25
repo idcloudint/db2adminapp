@@ -49,7 +49,7 @@ router.post('/run', async (_req: Request, res: Response) => {
  * GET /api/daily-tasks/stream
  * Stream task execution with Server-Sent Events (SSE)
  */
-router.get('/stream', async (req: Request, res: Response) => {
+router.get('/stream', async (_req: Request, res: Response) => {
   try {
     // Set headers for SSE
     res.setHeader('Content-Type', 'text/event-stream');
@@ -89,7 +89,6 @@ router.get('/stream', async (req: Request, res: Response) => {
 
       try {
         // Execute task (using private method via service)
-        const startTime = Date.now();
         const result = await (dailyTasksService as any).runTask(task);
         results.push(result);
 
