@@ -1,0 +1,14 @@
+.app-content {
+  margin-top: 3rem;
+  padding: 2rem;
+  min-height: calc(100vh - 3rem);
+  background-color: #f4f4f4;
+}
+
+@media (max-width: 672px) {
+  .app-content {
+    padding: 1rem;
+  }
+}
+
+// Made with Bob

@@ -5,6 +5,10 @@ import { WebSocketServer, WebSocket } from 'ws';
 import config from './config';
 import logger from './utils/logger';
 import healthRoutes from './routes/health.routes';
+import dailyTasksRoutes from './routes/daily-tasks.routes';
+import rcaRoutes from './routes/rca.routes';
+import investigationRoutes from './routes/investigation.routes';
+import logCollectorRoutes from './routes/log-collector.routes';
 import healthService from './services/health.service';
 import { WebSocketMessage } from './types';
 
@@ -40,6 +44,10 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/health', healthRoutes);
+app.use('/api/daily-tasks', dailyTasksRoutes);
+app.use('/api/rca', rcaRoutes);
+app.use('/api/investigation', investigationRoutes);
+app.use('/api/logs', logCollectorRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
