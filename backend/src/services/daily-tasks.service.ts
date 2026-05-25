@@ -12,6 +12,32 @@ import {
 
 const execAsync = promisify(exec);
 
+// Helper function to get DB2 pod name
+async function getDB2PodName(): Promise<string> {
+  try {
+    const { stdout } = await execAsync(
+      `oc get pods -n ${config.db2.namespace} -l ${config.db2.podLabel} -o jsonpath='{.items[0].metadata.name}'`
+    );
+    return stdout.trim().replace(/'/g, '');
+  } catch (error) {
+    logger.error('Failed to get DB2 pod name', { error });
+    throw new Error('Could not find DB2 pod');
+  }
+}
+
+// Helper function to execute command in DB2 pod
+async function execInDB2Pod(command: string): Promise<{ stdout: string; stderr: string }> {
+  const podName = await getDB2PodName();
+  const wrappedCommand = `oc exec -n ${config.db2.namespace} ${podName} -- su - ${config.db2.user} -c "${command}"`;
+  
+  logger.debug('Executing command in DB2 pod', { podName, command });
+  
+  return await execAsync(wrappedCommand, {
+    timeout: 30000,
+    maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+  });
+}
+
 class DailyTasksService {
   private taskHistory: TaskHistory[] = [];
   private currentRun: TaskRunSummary | null = null;
@@ -153,14 +179,8 @@ class DailyTasksService {
     try {
       logger.debug('Running task', { taskId: task.id, taskName: task.name });
 
-      // Execute the command
-      const { stdout, stderr } = await execAsync(task.command, {
-        timeout: 30000, // 30 second timeout
-        env: {
-          ...process.env,
-          DB2INSTANCE: config.db2.user
-        }
-      });
+      // Execute the command in DB2 pod
+      const { stdout, stderr } = await execInDB2Pod(task.command);
 
       const duration = Date.now() - startTime;
 
@@ -180,9 +200,9 @@ class DailyTasksService {
     } catch (error: any) {
       const duration = Date.now() - startTime;
       
-      logger.error('Task execution failed', { 
-        taskId: task.id, 
-        error: error.message 
+      logger.error('Task execution failed', {
+        taskId: task.id,
+        error: error.message
       });
 
       return {
