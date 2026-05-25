@@ -20,6 +20,22 @@ export interface TaskResult {
   details?: any;
   timestamp: Date;
   duration: number;
+  command?: string;
+  stdout?: string;
+  stderr?: string;
+  metrics?: Record<string, any>;
+  recommendations?: string[];
+}
+
+export interface TaskExecutionEvent {
+  type: 'init' | 'task-start' | 'task-complete' | 'complete' | 'error';
+  taskId?: string;
+  taskName?: string;
+  progress?: number;
+  result?: TaskResult;
+  summary?: TaskRunSummary;
+  tasks?: Array<{ id: string; name: string }>;
+  error?: string;
 }
 
 export interface TaskRunSummary {

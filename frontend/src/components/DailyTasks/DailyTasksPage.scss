@@ -1,0 +1,225 @@
+.daily-tasks-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .page-header {
+    margin-bottom: 2rem;
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: #6f6f6f;
+      font-size: 1rem;
+    }
+  }
+
+  .summary-section {
+    background: #f4f4f4;
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .summary-tags {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  }
+
+  .progress-section {
+    margin-bottom: 2rem;
+
+    .progress-bar {
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-text {
+      text-align: center;
+      color: #6f6f6f;
+      font-size: 0.875rem;
+    }
+  }
+
+  .error-notification {
+    margin-bottom: 2rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .tasks-section {
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .task-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+
+      .task-name {
+        flex: 1;
+        font-weight: 500;
+      }
+
+      .task-duration {
+        color: #6f6f6f;
+        font-size: 0.875rem;
+      }
+
+      .task-status-tag {
+        margin-left: auto;
+      }
+    }
+
+    .task-details {
+      padding: 1.5rem;
+      background: #ffffff;
+
+      .detail-section {
+        margin-bottom: 1.5rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        h4 {
+          font-size: 1rem;
+          font-weight: 600;
+          margin-bottom: 0.75rem;
+          color: #161616;
+        }
+
+        .status-message {
+          font-size: 0.875rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .timestamp {
+          color: #6f6f6f;
+          font-size: 0.75rem;
+          margin-top: 0.5rem;
+        }
+
+        .metrics-list,
+        .recommendations-list {
+          list-style: none;
+          padding-left: 0;
+          margin: 0;
+
+          li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e0e0e0;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            strong {
+              font-weight: 600;
+              margin-right: 0.5rem;
+            }
+          }
+        }
+
+        &.recommendations {
+          background: #f4f4f4;
+          padding: 1rem;
+          border-radius: 4px;
+
+          .recommendations-list {
+            li {
+              border-bottom: none;
+              padding: 0.25rem 0;
+              padding-left: 1.5rem;
+              position: relative;
+
+              &:before {
+                content: '•';
+                position: absolute;
+                left: 0.5rem;
+                color: #0f62fe;
+                font-weight: bold;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .status-icon-success {
+    color: #24a148;
+  }
+
+  .status-icon-warning {
+    color: #f1c21b;
+  }
+
+  .status-icon-error {
+    color: #da1e28;
+  }
+
+  .status-icon-pending {
+    color: #8d8d8d;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .daily-tasks-page {
+    padding: 1rem;
+
+    .page-header {
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    .summary-section {
+      padding: 1rem;
+
+      .summary-tags {
+        flex-direction: column;
+      }
+    }
+
+    .action-buttons {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+
+    .tasks-section {
+      .task-title {
+        flex-wrap: wrap;
+
+        .task-status-tag {
+          margin-left: 0;
+          margin-top: 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+// Made with Bob

@@ -255,7 +255,12 @@ class DailyTasksService {
         message: analysis.message,
         details: analysis.details,
         timestamp: new Date(),
-        duration
+        duration,
+        command: task.command,
+        stdout,
+        stderr,
+        metrics: analysis.metrics,
+        recommendations: analysis.recommendations
       };
 
     } catch (error: any) {
@@ -273,7 +278,12 @@ class DailyTasksService {
         message: `Task execution failed: ${error.message}`,
         details: { error: error.message, stderr: error.stderr },
         timestamp: new Date(),
-        duration
+        duration,
+        command: task.command,
+        stdout: '',
+        stderr: error.message,
+        metrics: {},
+        recommendations: ['Check DB2 pod status', 'Verify database connectivity', 'Review pod logs for errors']
       };
     }
   }
@@ -282,17 +292,19 @@ class DailyTasksService {
    * Analyze task output to determine status
    */
   private analyzeTaskOutput(
-    task: DailyTask, 
-    stdout: string, 
+    task: DailyTask,
+    stdout: string,
     stderr: string
-  ): { status: 'pass' | 'warning' | 'fail'; message: string; details: any } {
+  ): { status: 'pass' | 'warning' | 'fail'; message: string; details: any; metrics: Record<string, any>; recommendations: string[] } {
     
     // Check for errors in stderr
     if (stderr && stderr.toLowerCase().includes('error')) {
       return {
         status: 'fail',
         message: 'Command returned errors',
-        details: { stdout, stderr }
+        details: { stdout, stderr },
+        metrics: {},
+        recommendations: ['Review error messages', 'Check DB2 configuration', 'Verify database connectivity']
       };
     }
 
@@ -303,13 +315,17 @@ class DailyTasksService {
           return {
             status: 'pass',
             message: 'Database is active and available',
-            details: { output: stdout }
+            details: { output: stdout },
+            metrics: { databaseStatus: 'Active' },
+            recommendations: []
           };
         }
         return {
           status: 'fail',
           message: 'No active databases found',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: { databaseStatus: 'Inactive' },
+          recommendations: ['Start the database', 'Check DB2 instance status', 'Review db2diag.log for errors']
         };
 
       case 'tablespace-health':
@@ -320,20 +336,35 @@ class DailyTasksService {
             return {
               status: 'fail',
               message: `Tablespace usage critical: ${usage}%`,
-              details: { usage, output: stdout }
+              details: { usage, output: stdout },
+              metrics: { tablespaceUsage: usage, threshold: 'critical' },
+              recommendations: [
+                'URGENT: Free up tablespace immediately',
+                'Drop unnecessary tables or indexes',
+                'Archive old data',
+                'Consider adding more storage'
+              ]
             };
           } else if (usage >= (task.threshold?.warning || 80)) {
             return {
               status: 'warning',
               message: `Tablespace usage high: ${usage}%`,
-              details: { usage, output: stdout }
+              details: { usage, output: stdout },
+              metrics: { tablespaceUsage: usage, threshold: 'warning' },
+              recommendations: [
+                'Monitor tablespace growth trends',
+                'Plan for capacity expansion',
+                'Review data retention policies'
+              ]
             };
           }
         }
         return {
           status: 'pass',
           message: 'Tablespace usage is healthy',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: { tablespaceUsage: tbspMatch ? parseFloat(tbspMatch[1]) : 0 },
+          recommendations: []
         };
 
       case 'transaction-log-health':
@@ -344,20 +375,35 @@ class DailyTasksService {
             return {
               status: 'fail',
               message: `Transaction log usage critical: ${logUsage}%`,
-              details: { logUsage, output: stdout }
+              details: { logUsage, output: stdout },
+              metrics: { logUtilization: logUsage, threshold: 'critical' },
+              recommendations: [
+                'URGENT: Transaction log space critical',
+                'Commit or rollback long-running transactions',
+                'Increase log file size (LOGFILSIZ)',
+                'Archive logs if using archive logging'
+              ]
             };
           } else if (logUsage >= (task.threshold?.warning || 75)) {
             return {
               status: 'warning',
               message: `Transaction log usage high: ${logUsage}%`,
-              details: { logUsage, output: stdout }
+              details: { logUsage, output: stdout },
+              metrics: { logUtilization: logUsage, threshold: 'warning' },
+              recommendations: [
+                'Monitor transaction log growth',
+                'Review long-running transactions',
+                'Consider increasing LOGPRIMARY or LOGSECOND'
+              ]
             };
           }
         }
         return {
           status: 'pass',
           message: 'Transaction log usage is healthy',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: { logUtilization: logMatch ? parseFloat(logMatch[1]) : 0 },
+          recommendations: []
         };
 
       case 'diagnostic-log-review':
@@ -366,19 +412,33 @@ class DailyTasksService {
           return {
             status: 'fail',
             message: `Found ${errorCount} errors in last 24 hours`,
-            details: { errorCount, output: stdout }
+            details: { errorCount, output: stdout },
+            metrics: { errorCount, period: '24 hours' },
+            recommendations: [
+              'Review db2diag.log for error details',
+              'Investigate root cause of errors',
+              'Check for recurring error patterns',
+              'Consider opening support ticket if unresolved'
+            ]
           };
         } else if (errorCount > 0) {
           return {
             status: 'warning',
             message: `Found ${errorCount} errors in last 24 hours`,
-            details: { errorCount, output: stdout }
+            details: { errorCount, output: stdout },
+            metrics: { errorCount, period: '24 hours' },
+            recommendations: [
+              'Review error messages in db2diag.log',
+              'Monitor for recurring errors'
+            ]
           };
         }
         return {
           status: 'pass',
           message: 'No critical errors in diagnostic log',
-          details: { errorCount: 0 }
+          details: { errorCount: 0 },
+          metrics: { errorCount: 0, period: '24 hours' },
+          recommendations: []
         };
 
       case 'connection-health':
@@ -392,20 +452,39 @@ class DailyTasksService {
             return {
               status: 'fail',
               message: `Connection usage critical: ${active}/${max} (${usage.toFixed(1)}%)`,
-              details: { active, max, usage }
+              details: { active, max, usage },
+              metrics: { activeConnections: active, maxConnections: max, utilization: usage.toFixed(1) + '%' },
+              recommendations: [
+                'URGENT: Connection limit nearly reached',
+                'Increase MAX_CONNECTIONS parameter',
+                'Investigate connection leaks in applications',
+                'Review connection pooling configuration'
+              ]
             };
           } else if (usage >= 75) {
             return {
               status: 'warning',
               message: `Connection usage high: ${active}/${max} (${usage.toFixed(1)}%)`,
-              details: { active, max, usage }
+              details: { active, max, usage },
+              metrics: { activeConnections: active, maxConnections: max, utilization: usage.toFixed(1) + '%' },
+              recommendations: [
+                'Monitor connection growth trends',
+                'Consider increasing MAX_CONNECTIONS if trend continues',
+                'Review application connection management'
+              ]
             };
           }
         }
         return {
           status: 'pass',
           message: 'Connection usage is healthy',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: connMatch ? {
+            activeConnections: parseInt(connMatch[1]),
+            maxConnections: parseInt(connMatch[2]),
+            utilization: ((parseInt(connMatch[1]) / parseInt(connMatch[2])) * 100).toFixed(1) + '%'
+          } : {},
+          recommendations: []
         };
 
       case 'lock-analysis':
@@ -414,13 +493,22 @@ class DailyTasksService {
           return {
             status: 'warning',
             message: `Found ${lockCount} connections with lock waits`,
-            details: { lockCount, output: stdout }
+            details: { lockCount, output: stdout },
+            metrics: { lockWaitCount: lockCount },
+            recommendations: [
+              'Review applications causing lock waits',
+              'Consider optimizing query patterns',
+              'Check for long-running transactions',
+              'Review LOCKTIMEOUT configuration'
+            ]
           };
         }
         return {
           status: 'pass',
           message: 'No lock waits detected',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: { lockWaitCount: 0 },
+          recommendations: []
         };
 
       case 'backup-verification':
@@ -428,26 +516,43 @@ class DailyTasksService {
           return {
             status: 'pass',
             message: 'Recent backups completed successfully',
-            details: { output: stdout }
+            details: { output: stdout },
+            metrics: { backupStatus: 'Success' },
+            recommendations: []
           };
         } else if (stdout.includes('0 record(s) selected')) {
           return {
             status: 'fail',
             message: 'No backup history found',
-            details: { output: stdout }
+            details: { output: stdout },
+            metrics: { backupStatus: 'No backups found' },
+            recommendations: [
+              'URGENT: No backup history found',
+              'Configure automated backups immediately',
+              'Verify backup configuration',
+              'Test backup and restore procedures'
+            ]
           };
         }
         return {
           status: 'warning',
           message: 'Check backup history for issues',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: { backupStatus: 'Warning' },
+          recommendations: [
+            'Review backup history for failures',
+            'Verify backup schedule is running',
+            'Check backup logs for errors'
+          ]
         };
 
       default:
         return {
           status: 'pass',
           message: 'Task completed',
-          details: { output: stdout }
+          details: { output: stdout },
+          metrics: {},
+          recommendations: []
         };
     }
   }
