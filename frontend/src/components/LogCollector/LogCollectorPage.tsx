@@ -3,7 +3,7 @@ import { Button, Checkbox, Loading, InlineNotification } from '@carbon/react';
 import { DocumentDownload } from '@carbon/icons-react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_URL = process.env.REACT_APP_API_URL || '';
 
 const LogCollectorPage: React.FC = () => {
   const [selectedComponents, setSelectedComponents] = useState<string[]>([]);

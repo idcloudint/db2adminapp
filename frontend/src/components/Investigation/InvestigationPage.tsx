@@ -3,7 +3,7 @@ import { Button, TextInput, Loading, InlineNotification } from '@carbon/react';
 import { Search } from '@carbon/icons-react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_URL = process.env.REACT_APP_API_URL || '';
 
 const InvestigationPage: React.FC = () => {
   const [query, setQuery] = useState('');
