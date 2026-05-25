@@ -9,15 +9,16 @@ const router = Router();
  * POST /api/rca/analyze
  * Perform root cause analysis
  */
-router.post('/analyze', async (req: Request, res: Response) => {
+router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
   try {
     const request: RCARequest = req.body;
     
     if (!request.problemDescription) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Problem description is required'
       });
+      return;
     }
 
     const analysis = await rcaService.analyzeRootCause(request);
@@ -59,16 +60,17 @@ router.get('/history', async (_req: Request, res: Response) => {
  * GET /api/rca/:id
  * Get specific RCA by ID
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const rca = rcaService.getById(id);
     
     if (!rca) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'RCA not found'
       });
+      return;
     }
     
     res.json({

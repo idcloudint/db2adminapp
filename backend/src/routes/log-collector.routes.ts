@@ -9,15 +9,16 @@ const router = Router();
  * POST /api/logs/collect
  * Start log collection
  */
-router.post('/collect', async (req: Request, res: Response) => {
+router.post('/collect', async (req: Request, res: Response): Promise<void> => {
   try {
     const request: LogCollectionRequest = req.body;
     
     if (!request.includeComponents || request.includeComponents.length === 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'At least one component must be selected'
       });
+      return;
     }
 
     const job = await logCollectorService.startCollection(request);
@@ -39,16 +40,17 @@ router.post('/collect', async (req: Request, res: Response) => {
  * GET /api/logs/job/:jobId
  * Get job status
  */
-router.get('/job/:jobId', async (req: Request, res: Response) => {
+router.get('/job/:jobId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { jobId } = req.params;
     const job = logCollectorService.getJobStatus(jobId);
     
     if (!job) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Job not found'
       });
+      return;
     }
     
     res.json({

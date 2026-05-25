@@ -9,15 +9,16 @@ const router = Router();
  * POST /api/investigation/search
  * Perform complex investigation
  */
-router.post('/search', async (req: Request, res: Response) => {
+router.post('/search', async (req: Request, res: Response): Promise<void> => {
   try {
     const request: InvestigationRequest = req.body;
     
     if (!request.query) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Search query is required'
       });
+      return;
     }
 
     const investigation = await investigationService.investigate(request);
@@ -39,15 +40,16 @@ router.post('/search', async (req: Request, res: Response) => {
  * POST /api/investigation/execute-command
  * Execute a recommended command
  */
-router.post('/execute-command', async (req: Request, res: Response) => {
+router.post('/execute-command', async (req: Request, res: Response): Promise<void> => {
   try {
     const { commandId, command } = req.body;
     
     if (!command) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Command is required'
       });
+      return;
     }
 
     const result = await investigationService.executeCommand(commandId, command);
@@ -89,16 +91,17 @@ router.get('/history', async (_req: Request, res: Response) => {
  * GET /api/investigation/:id
  * Get specific investigation by ID
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const investigation = investigationService.getById(id);
     
     if (!investigation) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Investigation not found'
       });
+      return;
     }
     
     res.json({
