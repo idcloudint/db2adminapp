@@ -1,5 +1,3 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 import * as k8s from '@kubernetes/client-node';
 import logger from '../utils/logger';
@@ -10,8 +8,6 @@ import {
   TaskRunSummary,
   TaskHistory
 } from '../types/daily-tasks.types';
-
-const execAsync = promisify(exec);
 
 // Initialize Kubernetes client
 const kc = new k8s.KubeConfig();
